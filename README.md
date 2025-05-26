@@ -19,18 +19,6 @@ Wuying AgentBay SDK provides APIs for Python, TypeScript, and Golang to interact
 pip install wuying-agentbay-sdk
 ```
 
-### TypeScript
-
-```bash
-npm install wuying-agentbay-sdk
-```
-
-### Golang
-
-```bash
-go get github.com/aliyun/wuying-agentbay-sdk/golang/pkg/agentbay
-```
-
 ## Usage
 
 ### Python
@@ -55,87 +43,6 @@ print(content)
 # Execute an ADB shell command (for mobile environments)
 adb_result = session.adb.shell("ls /sdcard")
 print(adb_result)
-```
-
-### TypeScript
-
-```typescript
-import { AgentBay } from 'wuying-agentbay-sdk';
-
-// Initialize with API key
-const agentBay = new AgentBay({ apiKey: 'your_api_key' });
-
-// Create a session
-async function main() {
-  const session = await agentBay.create();
-  
-  // Execute a command
-  const result = await session.command.execute_command('ls -la');
-  console.log(result);
-
-  // Read a file
-  const content = await session.filesystem.read_file('/path/to/file.txt');
-  console.log(content);
-
-  // Execute an ADB shell command (for mobile environments)
-  const adbResult = await session.adb.shell('ls /sdcard');
-  console.log(adbResult);
-}
-
-main().catch(console.error);
-```
-
-### Golang
-
-```go
-package main
-
-import (
-	"fmt"
-	"os"
-	
-	"github.com/aliyun/wuying-agentbay-sdk/golang/pkg/agentbay"
-)
-
-func main() {
-  // Initialize with API key
-  client, err := agentbay.NewAgentBay("your_api_key")
-  if err != nil {
-    fmt.Printf("Error initializing AgentBay client: %v\n", err)
-    os.Exit(1)
-  }
-  
-  // Create a session
-  session, err := client.Create()
-  if err != nil {
-    fmt.Printf("Error creating session: %v\n", err)
-    os.Exit(1)
-  }
-  
-  // Execute a command
-  result, err := session.Command.ExecuteCommand("ls -la")
-  if err != nil {
-    fmt.Printf("Error executing command: %v\n", err)
-    os.Exit(1)
-  }
-  fmt.Printf("Command result: %v\n", result)
-
-  // Read a file
-  content, err := session.FileSystem.ReadFile("/path/to/file.txt")
-  if err != nil {
-    fmt.Printf("Error reading file: %v\n", err)
-    os.Exit(1)
-  }
-  fmt.Printf("File content: %s\n", content)
-
-  // Execute an ADB shell command (for mobile environments)
-  adbResult, err := session.Adb.Shell("ls /sdcard")
-  if err != nil {
-    fmt.Printf("Error executing ADB shell command: %v\n", err)
-    os.Exit(1)
-  }
-  fmt.Printf("ADB shell result: %s\n", adbResult)
-}
 ```
 
 ## Authentication
