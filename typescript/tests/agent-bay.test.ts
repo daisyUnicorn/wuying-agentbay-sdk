@@ -158,7 +158,7 @@ describe('Session', () => {
       // ResourceUrl is optional, so we just log it without checking if it's non-empty
       console.log(`Session resourceUrl: ${session.resourceUrl}`);
     });
-    
+
     it('should have filesystem, command, and adb properties', () => {
       expect(session.filesystem).toBeDefined();
       expect(session.command).toBeDefined();

@@ -107,7 +107,6 @@ export class AgentBay {
         if (resourceUrl) {
           session.resourceUrl = resourceUrl;
         }
-
         this.sessions.set(session.sessionId, session);
         return session;
 
