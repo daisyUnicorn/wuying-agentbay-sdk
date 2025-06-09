@@ -166,7 +166,6 @@ class Session:
                 session_info.resource_url = data["ResourceUrl"]
                 # Update the session's resource_url with the latest value
                 self.resource_url = data["ResourceUrl"]
-
             # Transfer DesktopInfo fields to SessionInfo
             if "DesktopInfo" in data:
                 desktop_info = data["DesktopInfo"]
@@ -180,7 +179,6 @@ class Session:
                     session_info.resource_id = desktop_info["ResourceId"]
                 if "ResourceType" in desktop_info:
                     session_info.resource_type = desktop_info["ResourceType"]
-
             return session_info
 
         except Exception as e:
