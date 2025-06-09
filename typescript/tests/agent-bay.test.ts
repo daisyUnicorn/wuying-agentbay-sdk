@@ -32,7 +32,7 @@ function getTestApiKey(): string {
   } catch (e) {
     // process is not defined in some environments
   }
-  
+
   if (!apiKey) {
     console.log('Warning: Using default API key. Set AGENTBAY_API_KEY environment variable for testing.');
     return 'akm-xxx'; // Replace with your test API key
@@ -47,11 +47,11 @@ describe('AgentBay', () => {
       const agentBay = new AgentBay({ apiKey });
       expect((agentBay as any).apiKey).toBe(apiKey);
     });
-    
+
     it('should initialize with API key from environment variable', () => {
       const originalEnv = process.env.AGENTBAY_API_KEY;
       process.env.AGENTBAY_API_KEY = 'env_api_key';
-      
+
       try {
         const agentBay = new AgentBay();
         expect((agentBay as any).apiKey).toBe('env_api_key');
@@ -64,11 +64,11 @@ describe('AgentBay', () => {
         }
       }
     });
-    
+
     it('should throw AuthenticationError if no API key is provided', () => {
       const originalEnv = process.env.AGENTBAY_API_KEY;
       delete process.env.AGENTBAY_API_KEY;
-      
+
       try {
         expect(() => new AgentBay()).toThrow();
       } finally {
@@ -79,44 +79,44 @@ describe('AgentBay', () => {
       }
     });
   });
-  
+
   describe('create, list, and delete', () => {
     let agentBay: AgentBay;
     let session: Session;
-    
+
     beforeEach(() => {
       const apiKey = getTestApiKey();
       agentBay = new AgentBay({ apiKey });
     });
-    
+
     it('should create, list, and delete a session', async () => {
       // Create a session
       console.log('Creating a new session...');
       session = await agentBay.create();
       console.log(`Session created with ID: ${session.sessionId}`);
-      
+
       // Ensure session ID is not empty
       expect(session.sessionId).toBeDefined();
       expect(session.sessionId.length).toBeGreaterThan(0);
-      
+
       // List sessions
       console.log('Listing sessions...');
       const sessions = agentBay.list();
-      
+
       // Ensure at least one session (the one we just created)
       expect(sessions.length).toBeGreaterThanOrEqual(1);
-      
+
       // Check if our created session is in the list
       const found = sessions.some(s => s.sessionId === session.sessionId);
       expect(found).toBe(true);
-      
+
       // Delete the session
       console.log('Deleting the session...');
       await agentBay.delete(session.sessionId);
-      
+
       // List sessions again to ensure it's deleted
       const sessionsAfterDelete = agentBay.list();
-      
+
       // Check if the deleted session is not in the list
       const stillExists = sessionsAfterDelete.some(s => s.sessionId === session.sessionId);
       expect(stillExists).toBe(false);
@@ -127,17 +127,17 @@ describe('AgentBay', () => {
 describe('Session', () => {
   let agentBay: AgentBay;
   let session: Session;
-  
+
   beforeEach(async () => {
     const apiKey = getTestApiKey();
     agentBay = new AgentBay({ apiKey });
-    
+
     // Create a session
     console.log('Creating a new session for testing...');
     session = await agentBay.create();
     console.log(`Session created with ID: ${session.sessionId}`);
   });
-  
+
   afterEach(async () => {
     // Clean up the session
     console.log('Cleaning up: Deleting the session...');
@@ -147,13 +147,13 @@ describe('Session', () => {
       console.log(`Warning: Error deleting session: ${error}`);
     }
   });
-  
+
   describe('properties', () => {
     it('should have valid sessionId', () => {
       expect(session.sessionId).toBeDefined();
       expect(session.sessionId.length).toBeGreaterThan(0);
     });
-    
+
     it('should log resourceUrl', () => {
       // ResourceUrl is optional, so we just log it without checking if it's non-empty
       console.log(`Session resourceUrl: ${session.resourceUrl}`);
@@ -165,37 +165,37 @@ describe('Session', () => {
       expect(session.adb).toBeDefined();
     });
   });
-  
+
   describe('methods', () => {
     it('should return the session ID', () => {
       const sessionId = session.getSessionId();
       expect(sessionId).toBe(session.sessionId);
     });
-    
+
     it('should return the API key', () => {
       const apiKey = session.getAPIKey();
       expect(apiKey).toBe(agentBay.getAPIKey());
     });
-    
+
     it('should return the client', () => {
       const client = session.getClient();
       expect(client).toBeDefined();
     });
   });
-  
+
   describe('delete', () => {
     it('should delete the session', async () => {
       // Create a new session specifically for this test
       console.log('Creating a new session for delete testing...');
       const testSession = await agentBay.create();
       console.log(`Session created with ID: ${testSession.sessionId}`);
-      
+
       // Test delete method
       console.log('Testing session.delete method...');
       try {
         const result = await testSession.delete();
         expect(result).toBe(true);
-        
+
         // Verify the session was deleted by checking it's not in the list
         const sessions = agentBay.list();
         const stillExists = sessions.some(s => s.sessionId === testSession.sessionId);
@@ -212,7 +212,7 @@ describe('Session', () => {
       }
     });
   });
-  
+
   describe('command', () => {
     it('should execute a command', async () => {
       if (session.command) {
@@ -232,7 +232,7 @@ describe('Session', () => {
       }
     });
   });
-  
+
   describe('filesystem', () => {
     it('should read a file', async () => {
       if (session.filesystem) {
@@ -258,17 +258,17 @@ describe('Session', () => {
 describe('Adb', () => {
   let agentBay: AgentBay;
   let session: Session;
-  
+
   beforeEach(async () => {
     const apiKey = getTestApiKey();
     agentBay = new AgentBay({ apiKey });
-    
+
     // Create a session
     console.log('Creating a new session for ADB testing...');
     session = await agentBay.create();
     console.log(`Session created with ID: ${session.sessionId}`);
   });
-  
+
   afterEach(async () => {
     // Clean up the session
     console.log('Cleaning up: Deleting the session...');
@@ -278,7 +278,7 @@ describe('Adb', () => {
       console.log(`Warning: Error deleting session: ${error}`);
     }
   });
-  
+
   describe('shell', () => {
     it('should execute ADB shell commands', async () => {
       if (session.adb) {
@@ -293,7 +293,7 @@ describe('Adb', () => {
           console.log(`Note: ADB shell execution failed: ${error}`);
           // Don't fail the test if ADB is not supported
         }
-        
+
         // Test another ADB command
         try {
           console.log('Executing ADB shell command to check device properties...');
