@@ -7,6 +7,7 @@ from agentbay.application import ApplicationManager
 from agentbay.command import Command
 from agentbay.exceptions import SessionError
 from agentbay.filesystem import FileSystem
+from agentbay.oss import Oss
 from agentbay.window import WindowManager
 from agentbay.mobile import MobileSystem
 
@@ -41,6 +42,7 @@ class Session:
         # Initialize file system, command handlers
         self.file_system = FileSystem(self)
         self.command = Command(self)
+        self.oss = Oss(self)
 
         # Initialize application and window managers
         self.application = ApplicationManager(self)
