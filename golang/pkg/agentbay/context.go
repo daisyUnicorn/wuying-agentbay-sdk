@@ -5,6 +5,7 @@ import (
 
 	"github.com/alibabacloud-go/tea/tea"
 	mcp "github.com/aliyun/wuying-agentbay-sdk/golang/api/client"
+	"github.com/aliyun/wuying-agentbay-sdk/golang/pkg/agentbay/models"
 )
 
 // Context represents a persistent storage context in the AgentBay cloud environment.
@@ -28,6 +29,37 @@ type Context struct {
 	OSType string
 }
 
+// ContextResult wraps context operation result and RequestID
+type ContextResult struct {
+	models.ApiResponse
+	ContextID string
+	Context   *Context
+}
+
+// ContextListResult wraps context list and RequestID
+type ContextListResult struct {
+	models.ApiResponse
+	Contexts []*Context
+}
+
+// ContextCreateResult wraps context creation result and RequestID
+type ContextCreateResult struct {
+	models.ApiResponse
+	ContextID string
+}
+
+// ContextModifyResult wraps context modification result and RequestID
+type ContextModifyResult struct {
+	models.ApiResponse
+	Success bool
+}
+
+// ContextDeleteResult wraps context deletion result and RequestID
+type ContextDeleteResult struct {
+	models.ApiResponse
+	Success bool
+}
+
 // ContextService provides methods to manage persistent contexts in the AgentBay cloud environment.
 type ContextService struct {
 	// AgentBay is the AgentBay instance.
@@ -35,7 +67,7 @@ type ContextService struct {
 }
 
 // List lists all available contexts.
-func (cs *ContextService) List() ([]Context, error) {
+func (cs *ContextService) List() (*ContextListResult, error) {
 	request := &mcp.ListContextsRequest{
 		Authorization: tea.String("Bearer " + cs.AgentBay.APIKey),
 	}
@@ -51,14 +83,18 @@ func (cs *ContextService) List() ([]Context, error) {
 		fmt.Println("Error calling ListContexts:", err)
 		return nil, fmt.Errorf("failed to list contexts: %v", err)
 	}
+
+	// Extract RequestID
+	requestID := models.ExtractRequestID(response)
+
 	if response != nil && response.Body != nil {
 		fmt.Println("Response from ListContexts:", response.Body)
 	}
 
-	var contexts []Context
+	var contexts []*Context
 	if response.Body != nil && response.Body.Data != nil {
 		for _, contextData := range response.Body.Data {
-			context := Context{
+			context := &Context{
 				ID:         tea.StringValue(contextData.Id),
 				Name:       tea.StringValue(contextData.Name),
 				State:      tea.StringValue(contextData.State),
@@ -70,11 +106,16 @@ func (cs *ContextService) List() ([]Context, error) {
 		}
 	}
 
-	return contexts, nil
+	return &ContextListResult{
+		ApiResponse: models.ApiResponse{
+			RequestID: requestID,
+		},
+		Contexts: contexts,
+	}, nil
 }
 
 // Get gets a context by name. Optionally creates it if it doesn't exist.
-func (cs *ContextService) Get(name string, create bool) (*Context, error) {
+func (cs *ContextService) Get(name string, create bool) (*ContextResult, error) {
 	request := &mcp.GetContextRequest{
 		Name:          tea.String(name),
 		AllowCreate:   tea.Bool(create),
@@ -92,15 +133,25 @@ func (cs *ContextService) Get(name string, create bool) (*Context, error) {
 		fmt.Println("Error calling GetContext:", err)
 		return nil, fmt.Errorf("failed to get context %s: %v", name, err)
 	}
+
+	// Extract RequestID
+	requestID := models.ExtractRequestID(response)
+
 	if response != nil && response.Body != nil {
 		fmt.Println("Response from GetContext:", response.Body)
 	}
 
 	if response.Body == nil || response.Body.Data == nil || response.Body.Data.Id == nil {
-		return nil, nil
+		return &ContextResult{
+			ApiResponse: models.ApiResponse{
+				RequestID: requestID,
+			},
+			ContextID: "",
+			Context:   nil,
+		}, nil
 	}
 
-	// Create a context object directly from the response data
+	// Create context object
 	context := &Context{
 		ID:         tea.StringValue(response.Body.Data.Id),
 		Name:       tea.StringValue(response.Body.Data.Name),
@@ -110,22 +161,37 @@ func (cs *ContextService) Get(name string, create bool) (*Context, error) {
 		OSType:     tea.StringValue(response.Body.Data.OsType),
 	}
 
-	// If the name is empty (which shouldn't happen), use the provided name
-	if context.Name == "" {
-		context.Name = name
-	}
-
-	return context, nil
+	return &ContextResult{
+		ApiResponse: models.ApiResponse{
+			RequestID: requestID,
+		},
+		ContextID: tea.StringValue(response.Body.Data.Id),
+		Context:   context,
+	}, nil
 }
 
 // Create creates a new context with the given name.
-func (cs *ContextService) Create(name string) (*Context, error) {
-	return cs.Get(name, true)
+func (cs *ContextService) Create(name string) (*ContextCreateResult, error) {
+	result, err := cs.Get(name, true)
+	if err != nil {
+		return nil, err
+	}
+
+	if result == nil || result.ContextID == "" {
+		return nil, fmt.Errorf("failed to create context: empty response")
+	}
+
+	return &ContextCreateResult{
+		ApiResponse: models.ApiResponse{
+			RequestID: result.RequestID,
+		},
+		ContextID: result.ContextID,
+	}, nil
 }
 
 // Update updates the specified context.
-// Returns true if the update was successful, false otherwise.
-func (cs *ContextService) Update(context *Context) (bool, error) {
+// Returns a result with success status.
+func (cs *ContextService) Update(context *Context) (*ContextModifyResult, error) {
 	request := &mcp.ModifyContextRequest{
 		Id:            tea.String(context.ID),
 		Name:          tea.String(context.Name),
@@ -141,24 +207,32 @@ func (cs *ContextService) Update(context *Context) (bool, error) {
 	// Log API response
 	if err != nil {
 		fmt.Println("Error calling ModifyContext:", err)
-		return false, fmt.Errorf("failed to update context %s: %v", context.ID, err)
+		return nil, fmt.Errorf("failed to update context %s: %v", context.ID, err)
 	}
+
+	// Extract RequestID
+	requestID := models.ExtractRequestID(response)
+
 	if response != nil && response.Body != nil {
 		fmt.Println("Response from ModifyContext:", response.Body)
 	}
 
-	// Check if the update was successful
+	// Check if update was successful
+	success := true
 	if response != nil && response.Body != nil && response.Body.Success != nil {
-		return *response.Body.Success, nil
+		success = *response.Body.Success
 	}
 
-	// If we can't determine success from the response, assume it was successful
-	// since there was no error
-	return true, nil
+	return &ContextModifyResult{
+		ApiResponse: models.ApiResponse{
+			RequestID: requestID,
+		},
+		Success: success,
+	}, nil
 }
 
 // Delete deletes the specified context.
-func (cs *ContextService) Delete(context *Context) error {
+func (cs *ContextService) Delete(context *Context) (*ContextDeleteResult, error) {
 	request := &mcp.DeleteContextRequest{
 		Id:            tea.String(context.ID),
 		Authorization: tea.String("Bearer " + cs.AgentBay.APIKey),
@@ -173,11 +247,20 @@ func (cs *ContextService) Delete(context *Context) error {
 	// Log API response
 	if err != nil {
 		fmt.Println("Error calling DeleteContext:", err)
-		return fmt.Errorf("failed to delete context %s: %v", context.ID, err)
+		return nil, fmt.Errorf("failed to delete context %s: %v", context.ID, err)
 	}
+
+	// Extract RequestID
+	requestID := models.ExtractRequestID(response)
+
 	if response != nil && response.Body != nil {
 		fmt.Println("Response from DeleteContext:", response.Body)
 	}
 
-	return nil
+	return &ContextDeleteResult{
+		ApiResponse: models.ApiResponse{
+			RequestID: requestID,
+		},
+		Success: true,
+	}, nil
 }

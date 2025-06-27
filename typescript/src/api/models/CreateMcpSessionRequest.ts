@@ -6,6 +6,7 @@ export class CreateMcpSessionRequest extends $dara.Model {
   authorization?: string;
   contextId?: string;
   externalUserId?: string;
+  imageId?: string;
   labels?: string;
   sessionId?: string;
   static names(): { [key: string]: string } {
@@ -13,6 +14,7 @@ export class CreateMcpSessionRequest extends $dara.Model {
       authorization: 'Authorization',
       contextId: 'ContextId',
       externalUserId: 'ExternalUserId',
+      imageId: 'ImageId',
       labels: 'Labels',
       sessionId: 'SessionId',
     };
@@ -23,8 +25,9 @@ export class CreateMcpSessionRequest extends $dara.Model {
       authorization: 'string',
       contextId: 'string',
       externalUserId: 'string',
+      imageId: 'string',
       labels: 'string',
-      sessionId: 'string',
+      sessionId: 'string'
     };
   }
 
