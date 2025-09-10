@@ -14,6 +14,63 @@ AgentBay is a cloud computing environment. You can think of it as:
 - **Linux Images**: Ubuntu and other Linux distributions, suitable for development, deployment, data processing
 - **Windows Images**: Windows Server, suitable for .NET development, Windows application testing
 - **Android Images**: Android system, suitable for mobile app testing, automation
+- **Browser Images**: Chrome, Firefox, Edge, suitable for web application testing, browser automation
+- **Code Images**: Support executing Python and JavaScript code within the session.
+
+## 🏗️ Runtime Environment Types
+
+AgentBay provides different types of cloud runtime environments, each optimized for specific use cases:
+
+### Environment Types
+- **ComputerUse**: Traditional computer environments for general computing tasks
+  - **Linux**: Linux-based environment for development, deployment, and data processing
+  - **Windows**: Windows-based environment for .NET development and Windows application testing
+- **BrowserUse**: Browser-based environment for web automation and testing
+- **CodeSpace**: Specialized development environment with pre-configured development tools
+- **MobileUse**: Mobile environment for Android app testing and automation
+
+### Standard Images
+AgentBay provides five standard images corresponding to these environment types:
+
+| Environment Type | Image ID | Description |
+|------------------|----------|-------------|
+| ComputerUse (Linux) | `linux_latest` | Ubuntu-based Linux environment |
+| ComputerUse (Windows) | `windows_latest` | Windows Server environment |
+| BrowserUse | `browser_latest` | Browser automation environment |
+| CodeSpace | `code_latest` | Development-optimized environment |
+| MobileUse | `mobile_latest` | Android mobile environment |
+
+### Creating Sessions with Different Images
+You can specify the image ID when creating a session to use different environment types:
+
+```python
+from agentbay.session_params import CreateSessionParams
+
+# Linux environment for general computing
+linux_params = CreateSessionParams(image_id="linux_latest")
+linux_session = agent_bay.create(linux_params).session
+
+# Windows environment for Windows-specific tasks
+windows_params = CreateSessionParams(image_id="windows_latest")
+windows_session = agent_bay.create(windows_params).session
+
+# Browser environment for web automation
+browser_params = CreateSessionParams(image_id="browser_latest")
+browser_session = agent_bay.create(browser_params).session
+
+# CodeSpace environment for development
+code_params = CreateSessionParams(image_id="code_latest")
+code_session = agent_bay.create(code_params).session
+
+# Mobile environment for Android automation
+mobile_params = CreateSessionParams(image_id="mobile_latest")
+mobile_session = agent_bay.create(mobile_params).session
+```
+
+### API Compatibility
+Different images provide different capabilities, so the available SDK APIs vary by environment type. If you attempt to call an API that is not supported in the current environment type, the results may not meet expectations.
+
+**Important**: Always choose the appropriate image type for your specific use case to ensure all required APIs are available.
 
 ## 🔗 Session
 
@@ -42,6 +99,12 @@ windows_session = agent_bay.create(windows_params).session
 # Android image
 android_params = CreateSessionParams(image_id="mobile_latest")
 android_session = agent_bay.create(android_params).session
+
+browser_params = CreateSessionParams(image_id="browser_latest")
+browser_session = agent_bay.create(browser_params).session
+
+code_params = CreateSessionParams(image_id="code_latest")
+code_session = agent_bay.create(code_params).session
 
 # Sessions have independent:
 # - File system (varies by image type)
@@ -96,53 +159,64 @@ File operations vary depending on the operating system image:
 
 #### Linux/Android
 ```python
-# Write file
-session.filesystem.write_file("/tmp/hello.txt", "Hello World")
+session = agent_bay.create().session
+session.file_system.write_file("/tmp/hello.txt", "Hello World")
+content = session.file_system.read_file("/tmp/hello.txt")
+print(content.content)
 
-# Read file
-content = session.filesystem.read_file("/tmp/hello.txt")
-print(content.content)  # Hello World
-
-# List directory
-files = session.filesystem.list_directory("/tmp")
+files = session.file_system.list_directory("/tmp")
 for file in files.entries:
-    print(file.name)
+    try:
+        print(file['name'])
+    except KeyError:
+        print(f"Invalid file entry: {file}")
+agent_bay.delete(session)
 ```
 
 #### Windows
 ```python
+ params = CreateSessionParams(
+        image_id="windows_latest",
+    )
+session = agent_bay.create(params).session
 # Write file
-session.filesystem.write_file("C:\\Users\\hello.txt", "Hello World")
+session.file_system.write_file("C:\\Users\\hello.txt", "Hello World")
 
 # Read file
-content = session.filesystem.read_file("C:\\Users\\hello.txt")
+content = session.file_system.read_file("C:\\Users\\hello.txt")
 print(content.content)  # Hello World
 
 # List directory
-files = session.filesystem.list_directory("C:\\Users")
+files = session.file_system.list_directory("C:\\Users")
 for file in files.entries:
-    print(file.name)
+    print(file['name'])
+agent_bay.delete(session)
 ```
 
 ## ⚡ Command Execution
 
 ### Linux/Android Commands
 ```python
+#init session with imageId linux_latest
+session = agent_bay.create().session
 # Basic commands
-result = session.command.execute_command("ls -la")
-result = session.command.execute_command("pwd")
-result = session.command.execute_command("whoami")
-
+session.command.execute_command("ls -la")
+session.command.execute_command("pwd")
+session.command.execute_command("whoami")
 # Install packages
-result = session.command.execute_command("apt-get update")
-result = session.command.execute_command("apt-get install -y python3-pip")
-
+session.command.execute_command("apt-get update")
+session.command.execute_command("apt-get install -y python3-pip")
 # Run Python
-result = session.command.execute_command("python3 -c 'print(\"Hello from Python\")'")
+session.command.execute_command("python3 -c 'print(\"Hello from Python\")'")
+# release session
+agent_bay.delete(session)
 ```
 
 ### Windows Commands
 ```python
+#init session with imageId windows_latest
+params = CreateSessionParams(image_id="windows_latest")
+session = agent_bay.create(params).session
 # Basic commands
 result = session.command.execute_command("dir")
 result = session.command.execute_command("cd")
@@ -155,10 +229,16 @@ result = session.command.execute_command("powershell -Command \"Get-Date\"")
 
 # Run programs
 result = session.command.execute_command("python --version")
+
+# release session
+agent_bay.delete(session)
 ```
 
 ### Android Commands
 ```python
+#init session with imageId mobile_latest
+params = CreateSessionParams(image_id="mobile_latest")
+session = agent_bay.create(params).session
 # Android-specific commands
 result = session.command.execute_command("am start -n com.android.settings/.Settings")
 result = session.command.execute_command("input tap 500 500")
@@ -167,6 +247,9 @@ result = session.command.execute_command("screencap /tmp/screenshot.png")
 # Package management
 result = session.command.execute_command("pm list packages")
 result = session.command.execute_command("pm install /tmp/app.apk")
+
+# release session
+agent_bay.delete(session)
 ```
 
 ## 🔄 Data Persistence
@@ -179,9 +262,9 @@ result = session.command.execute_command("pm install /tmp/app.apk")
 ```python
 # Temporary data - will be lost
 # For Linux/Android:
-session.filesystem.write_file("/tmp/temp_data.txt", "temporary content")
+session.file_system.write_file("/tmp/temp_data.txt", "temporary content")
 # For Windows:
-session.filesystem.write_file("C:\\Users\\temp_data.txt", "temporary content")
+session.file_system.write_file("C:\\Users\\temp_data.txt", "temporary content")
 ```
 
 ### Persistent Data (Context)
@@ -190,8 +273,9 @@ session.filesystem.write_file("C:\\Users\\temp_data.txt", "temporary content")
 - Suitable for: configuration files, user data, project files
 
 ```python
-from agentbay import ContextSync, SyncPolicy
-
+from agentbay import AgentBay
+from agentbay.session_params import CreateSessionParams
+from agentbay import ContextSync
 # Create persistent context
 context = agent_bay.context.get("my-project", create=True).context
 
@@ -199,12 +283,14 @@ context = agent_bay.context.get("my-project", create=True).context
 context_sync = ContextSync.new(context.id, "/tmp/data")
 
 # Create session with persistent data
-from agentbay import CreateSessionParams
 params = CreateSessionParams(context_syncs=[context_sync])
 session = agent_bay.create(params).session
 
 # Data written to /tmp/data will persist
-session.filesystem.write_file("/tmp/data/config.json", '{"setting": "value"}')
+session.file_system.write_file("/tmp/data/config.json", '{"setting": "value"}')
+session.file_system.read_file("/tmp/data/config.json")
+# release session
+self.run_delete_session(session)
 ```
 
 ## 🏷️ Labels and Organization
@@ -261,4 +347,4 @@ Now that you understand the core concepts:
 3. **Learn best practices**: Check out [Best Practices](best-practices.md)
 4. **Explore advanced features**: Browse the [Feature Guides](../guides/README.md)
 
-Remember: AgentBay gives you the power of cloud computing with the simplicity of local development! 
+Remember: AgentBay gives you the power of cloud computing with the simplicity of local development!

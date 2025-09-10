@@ -1,6 +1,6 @@
 # AgentBay SDK
 
-> 在云端环境中执行命令、操作文件、运行代码的多语言SDK
+> AgentBay SDK提供了一整套全面的工具，以便与AgentBay云环境进行高效交互，使您能够创建和管理云会话、执行命令、操作文件以及与用户界面进行交互。
 
 [English](README.md) | [中文](README-CN.md)
 
@@ -18,6 +18,15 @@
 
 1. 注册阿里云账号：[https://aliyun.com](https://aliyun.com)
 2. 获取API密钥：[AgentBay控制台](https://agentbay.console.aliyun.com/service-management)
+3. 设置环境变量：
+   - 对于Linux/MacOS：
+```bash
+    export AGENTBAY_API_KEY=your_api_key_here
+```
+   - 对于Windows：
+```cmd
+    setx AGENTBAY_API_KEY your_api_key_here
+```
 
 ## 🚀 快速开始
 
@@ -29,8 +38,8 @@ from agentbay import AgentBay
 agent_bay = AgentBay()
 session_result = agent_bay.create()
 session = session_result.session
-result = session.command.execute("echo 'Hello AgentBay'")
-print(result.data.stdout)  # Hello AgentBay
+result = session.command.execute_command("echo 'Hello AgentBay'")
+print(result.output)  # Hello AgentBay
 
 # 清理资源
 agent_bay.delete(session)
@@ -44,8 +53,8 @@ import { AgentBay } from 'wuying-agentbay-sdk';
 const agentBay = new AgentBay();
 const sessionResult = await agentBay.create();
 const session = sessionResult.session;
-const result = await session.command.execute("echo 'Hello AgentBay'");
-console.log(result.data.stdout);  // Hello AgentBay
+const result = await session.command.executeCommand("echo 'Hello AgentBay'");
+console.log(result.output);  // Hello AgentBay
 
 // 清理资源
 await agentBay.delete(session);

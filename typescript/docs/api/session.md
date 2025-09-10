@@ -5,24 +5,24 @@ The `Session` class represents a session in the AgentBay cloud environment. It p
 ## Properties
 
 ```typescript
-agentBay  // The AgentBay instance that created this session
-sessionId  // The ID of this session
-resourceUrl  // The URL of the resource associated with this session
-fileSystem  // The FileSystem instance for this session
-command  // The Command instance for this session
-code  // The Code instance for this session
-oss  // The Oss instance for this session
-application  // The Application instance for this session
-window  // The WindowManager instance for this session
-ui  // The UI instance for this session
-context  // The ContextManager instance for this session
-browser  // The Browser instance for this session
-agent  // The Agent instance for this session
-isVpc  // Whether this session uses VPC resources
-networkInterfaceIp  // Network interface IP for VPC sessions
-httpPort  // HTTP port for VPC sessions
-mcpTools  // MCP tools available for this session
+sessionId: string                    // The ID of this session
+fileSystem: FileSystem               // The FileSystem instance for this session
+command: Command                     // The Command instance for this session
+code: Code                          // The Code instance for this session
+oss: Oss                            // The Oss instance for this session
+application: Application            // The Application instance for this session
+window: WindowManager               // The WindowManager instance for this session
+ui: UI                              // The UI instance for this session
+context: ContextManager             // The ContextManager instance for this session
+browser: Browser                    // The Browser instance for this session
+agent: Agent                        // The Agent instance for this session
+isVpc: boolean                      // Whether this session uses VPC resources
+networkInterfaceIp: string          // Network interface IP for VPC sessions
+httpPort: string                    // HTTP port for VPC sessions
+mcpTools: McpTool[]                 // MCP tools available for this session
 ```
+
+**Note:** The `agentBay` property is private and not part of the public API.
 
 ## Methods
 
@@ -206,6 +206,77 @@ async function getSessionLink(session) {
     return result.data;
   } catch (error) {
     console.error(`Failed to get link: ${error}`);
+    throw error;
+  }
+}
+```
+
+### getLinkAsync
+
+Asynchronously gets a link for this session.
+
+```typescript
+getLinkAsync(protocolType?: string, port?: number): Promise<LinkResult>
+```
+
+**Parameters:**
+- `protocolType` (string, optional): The protocol type for the link.
+- `port` (number, optional): The port for the link.
+
+**Returns:**
+- `Promise<LinkResult>`: A promise that resolves to a result object containing the session link, request ID, and success status.
+
+**Example:**
+```typescript
+// Get session link asynchronously
+async function getSessionLinkAsync(session) {
+  try {
+    const result = await session.getLinkAsync();
+    console.log(`Session link: ${result.data}`);
+    console.log(`Request ID: ${result.requestId}`);
+    
+    // Get link with specific protocol and port
+    const customResult = await session.getLinkAsync('https', 8443);
+    console.log(`Custom link: ${customResult.data}`);
+    
+    return result.data;
+  } catch (error) {
+    console.error(`Failed to get link: ${error}`);
+    throw error;
+  }
+}
+```
+
+### listMcpTools
+
+Lists MCP tools available for this session.
+
+```typescript
+listMcpTools(imageId?: string): Promise<McpToolsResult>
+```
+
+**Parameters:**
+- `imageId` (string, optional): The image ID to list tools for. Defaults to "linux_latest".
+
+**Returns:**
+- `Promise<McpToolsResult>`: A promise that resolves to a result object containing success status, request ID, and the list of MCP tools.
+
+**Example:**
+```typescript
+// List MCP tools
+async function listMcpTools(session) {
+  try {
+    const result = await session.listMcpTools();
+    console.log(`Found ${result.tools.length} MCP tools`);
+    console.log(`Request ID: ${result.requestId}`);
+    
+    for (const tool of result.tools) {
+      console.log(`Tool: ${tool.name} - ${tool.description}`);
+    }
+    
+    return result.tools;
+  } catch (error) {
+    console.error(`Failed to list MCP tools: ${error}`);
     throw error;
   }
 }

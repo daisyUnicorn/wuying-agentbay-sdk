@@ -24,6 +24,36 @@ export function defaultConfig(): Config {
   };
 }
 
+// Track if .env file has been loaded to avoid duplicate loading
+let dotEnvLoaded = false;
+
+/**
+ * Load .env file into process.env if it exists
+ * This function should be called early to ensure .env variables are available
+ */
+export function loadDotEnv(): void {
+  if (dotEnvLoaded) {
+    return; // Already loaded, skip
+  }
+
+  try {
+    const envPath = path.resolve(process.cwd(), ".env");
+    if (fs.existsSync(envPath)) {
+      const envConfig = dotenv.parse(fs.readFileSync(envPath));
+      for (const k in envConfig) {
+        // only load env variables that are not already set in process.env
+        if (!process.env.hasOwnProperty(k)) {
+          process.env[k] = envConfig[k];
+        }
+      }
+      log(`Loaded .env file at: ${envPath}`);
+      dotEnvLoaded = true;
+    }
+  } catch (error) {
+    log(`Warning: Failed to load .env file: ${error}`);
+  }
+}
+
 /**
  * The SDK uses the following precedence order for configuration (highest to lowest):
  * 1. Explicitly passed configuration in code.
@@ -56,27 +86,33 @@ export function loadConfig(customConfig?: Config): Config {
     }
   }
 
-  // Try to load .env file
+  // Try to load .env file for values not set by environment variables
+  // This ensures backward compatibility for direct loadConfig() calls
   const envPath = path.resolve(process.cwd(), ".env");
 
   if (fs.existsSync(envPath)) {
     const envConfig = dotenv.parse(fs.readFileSync(envPath));
-    for (const k in envConfig) {
-      // only load env variables that are not already set in process.env
-      if (!process.env.hasOwnProperty(k)) {
-        // update config object to reflect values from .env file
-        if (k === "AGENTBAY_REGION_ID") config.region_id = envConfig[k];
-        else if (k === "AGENTBAY_ENDPOINT") config.endpoint = envConfig[k];
-        else if (k === "AGENTBAY_TIMEOUT_MS") {
-          const timeout = parseInt(envConfig[k], 10);
-          if (!isNaN(timeout) && timeout > 0) {
-            config.timeout_ms = timeout;
-          }
-        }
+    
+    // Only use .env values if corresponding environment variables are not set
+    // This maintains the correct precedence: env vars > .env file > defaults
+    if (!process.env.AGENTBAY_REGION_ID && envConfig.AGENTBAY_REGION_ID) {
+      config.region_id = envConfig.AGENTBAY_REGION_ID;
+    }
+    
+    if (!process.env.AGENTBAY_ENDPOINT && envConfig.AGENTBAY_ENDPOINT) {
+      config.endpoint = envConfig.AGENTBAY_ENDPOINT;
+    }
+    
+    if (!process.env.AGENTBAY_TIMEOUT_MS && envConfig.AGENTBAY_TIMEOUT_MS) {
+      const timeout = parseInt(envConfig.AGENTBAY_TIMEOUT_MS, 10);
+      if (!isNaN(timeout) && timeout > 0) {
+        config.timeout_ms = timeout;
       }
     }
+    
     log(`Loaded .env file at: ${envPath}`);
   }
+
   return config;
 }
 

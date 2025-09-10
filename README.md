@@ -1,6 +1,6 @@
 # AgentBay SDK
 
-> Multi-language SDK for executing commands, operating files, and running code in cloud environments
+> The AgentBay SDK provides a comprehensive suite of tools for efficient interaction with AgentBay cloud environments, enabling you to create and manage cloud sessions, execute commands, operate files, and interact with user interfaces.
 
 [English](README.md) | [中文](README-CN.md)
 
@@ -17,7 +17,16 @@
 Before using the SDK, you need to:
 
 1. Register an Alibaba Cloud account: [https://aliyun.com](https://aliyun.com)
-2. Get API credentials: [AgentBay Console](https://agentbay.console.aliyun.com/service-management)
+2. Get APIKEY credentials: [AgentBay Console](https://agentbay.console.aliyun.com/service-management)
+3. Set environment variable:
+   - For Linux/MacOS:
+```bash
+    export AGENTBAY_API_KEY=your_api_key_here
+```
+   - For Windows:
+```cmd
+    setx AGENTBAY_API_KEY your_api_key_here
+```
 
 ## 🚀 Quick Start
 
@@ -53,10 +62,7 @@ await agentBay.delete(session);
 
 ### Golang
 ```go
-import (
-    "fmt"
-    "github.com/aliyun/wuying-agentbay-sdk/golang/pkg/agentbay"
-)
+import "github.com/aliyun/wuying-agentbay-sdk/golang/pkg/agentbay"
 
 // Create session and execute command
 client, err := agentbay.NewAgentBay("", nil)

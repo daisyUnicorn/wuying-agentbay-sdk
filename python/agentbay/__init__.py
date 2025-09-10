@@ -17,10 +17,12 @@ from .context_sync import (
     DownloadPolicy,
     DownloadStrategy,
     DeletePolicy,
+    ExtractPolicy,
     BWList,
     WhiteList,
 )
 from .context_manager import ContextManager, ContextInfoResult, ContextSyncResult
+from .logger import AgentBayLogger, get_logger, log
 
 __all__ = [
     "Config",
@@ -47,9 +49,13 @@ __all__ = [
     "DownloadPolicy",
     "DownloadStrategy",
     "DeletePolicy",
+    "ExtractPolicy",
     "BWList",
     "WhiteList",
     "ContextManager",
     "ContextInfoResult",
     "ContextSyncResult",
+    "AgentBayLogger",
+    "get_logger",
+    "log",
 ]
